@@ -4,6 +4,7 @@ from xml.dom import minidom
 import sys
 from subprocess import Popen, PIPE
 from optparse import OptionParser
+import string
 
 
 def levenshtein(s, t):
@@ -74,31 +75,48 @@ def compare_names(name1, name2):
 	eqs = 0
 	for e1 in name1:
 		for e2 in name2:
-			dist = levenshtein(e1, e2)
+			dist = levenshtein(e1.lower(), e2.lower())
 			if dist <= 1:
 				eqs += 1
 	return eqs >= 2
+
+
+def clean(dirty):
+	res = dirty.strip()
+	for c in string.punctuation:
+		res = res.replace(c, u'')
+	return res
+
+
+def build(name, date, part, work, cit):
+	result = u' '.join(name)
+	if date != u'':
+		result += u', ' + date
+	if part != u'':
+		result += u', ' + part
+	if work != u'':
+		result += u', ' + work
+	if cit != u'':
+		result += u', ' + cit
+	return result
 
 
 def get_data(politicians, csvfile):
 	with open(csvfile, "r") as db:
 		for line in db:
 			data = line.rstrip('\n').decode('utf8').split(u';')
-			name = data[0].lower().split()
+			name = data[0].split()
 			
 			for s, e, ename in politicians:
 				if compare_names(ename, name):
-					yield s, e, name, data[1].strip(), data[2].replace(u'[', u'').strip()
+					yield s, e, build(name, clean(data[1]), clean(data[2]), clean(data[3]), clean(data[4]))
 
 
 def insert(article, data):
 	offset = 0
-	for start, end, name, dr, par in sorted(data, key=lambda x: x[1]):
-		string = u' '.join(name) + u', ' + dr
-		if par != u'':
-			string += u', ' + par
-		article = article[:offset + end] + u'(' + string + u')' + article[offset + end:]
-		offset += len(string) + 2
+	for start, end, info in sorted(data, key=lambda x: x[1]):
+		article = article[:offset + end] + u'(' + info + u')' + article[offset + end:]
+		offset += len(info) + 2
 
 	return article
 
