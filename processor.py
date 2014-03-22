@@ -75,7 +75,7 @@ def compare_names(name1, name2):
 	for e1 in name1:
 		for e2 in name2:
 			dist = levenshtein(e1, e2)
-			if dist <= 3:
+			if dist <= 1:
 				eqs += 1
 	return eqs >= 2
 
@@ -88,12 +88,15 @@ def get_data(politicians, csvfile):
 			
 			for s, e, ename in politicians:
 				if compare_names(ename, name):
-					yield s, e, data[1]
+					yield s, e, name, data[1].strip(), data[2].replace(u'[', u'').strip()
 
 
 def insert(article, data):
 	offset = 0
-	for start, end, string in sorted(data, key=lambda x: x[1]):
+	for start, end, name, dr, par in sorted(data, key=lambda x: x[1]):
+		string = u' '.join(name) + u', ' + dr
+		if par != u'':
+			string += u', ' + par
 		article = article[:offset + end] + u'(' + string + u')' + article[offset + end:]
 		offset += len(string) + 2
 
@@ -102,7 +105,7 @@ def insert(article, data):
 
 def main():
 	parser = OptionParser()
-	parser.add_option("-d", "--db", dest="db", metavar="FILE", default="db.csv")
+	parser.add_option("-d", "--db", dest="db", metavar="FILE", default="result.csv")
 	(options, args) = parser.parse_args()
 	if not args:
 		print 'Select file'
