@@ -25,7 +25,9 @@ def main():
 	countRecords = 10
 	politics = [u'Политик', u'Государственный деятель']
 	dates = [u'дата рождения', u'Дата рождения']
-	parts = [u'Партия']
+	parts = [u'Партия', u'партия']
+	works = [u'деятельность', u'Деятельность', u'должность']
+	cships = [u'гражданство', u'гражданство']
 
 	f = open('result.csv', 'w+')
 	
@@ -36,21 +38,20 @@ def main():
 		if page.localName == 'page':
 			text = page.getElementsByTagName('text')
 			if text.length > 0 and text[0].childNodes.length > 0:
-#				print 'list'
 				list = text[0].childNodes[0].nodeValue.split('|')
 				count = 0
 				flag = False
 				title = None
 				date = None
 				part = None
+				work = None
+				cship = None
 				for record in list:
 					if count >= countRecords and not flag:
 						break				
 
 					if  not flag and compare(politics, record):
-#						print 'title'
 						title = page.getElementsByTagName('title')[0].childNodes[0].nodeValue.replace(',','')
-#						print title
 						flag = len(title.split(' '))==3
 
 					if flag and date is None:
@@ -58,8 +59,14 @@ def main():
 
 					if flag and part is None:
 						part = findData(parts, record)
+
+					if flag and work is None:
+						work = findData(works, record)
+
+					if flag and cship is None:
+						cship = findData(cships, record)
 					
-					if not part is None and not title is None and not date is None:
+					if not part is None and not title is None and not date is None and not work is None and not cship is None:
 						break
 
 					count = count+1
@@ -76,6 +83,16 @@ def main():
 							f.write(';')					
 						if not date is None:
 							f.write('%s;' %  date.replace('\n','').encode('utf8'))
+
+						if work is None:
+							f.write(';')					
+						if not work is None:
+							f.write('%s;' %  work.replace('\n','').encode('utf8'))
+
+						if cship is None:
+							f.write(';')					
+						if not cship is None:
+							f.write('%s;' %  cship.replace('\n','').encode('utf8'))
 
 						if part is None:
 							f.write('\n')					
